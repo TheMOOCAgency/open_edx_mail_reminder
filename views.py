@@ -12,24 +12,13 @@ from datetime import date
 from dateutil.parser import parse
 from colorama import Fore, Back, Style 
 
-
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
-sys.path.append("/edx/app/edxapp/edx-platform/lms/djangoapps/tma_apps")
-sys.path.append("/edx/app/edxapp/edx-platform/lms/djangoapps")
-
 from django.utils.translation import ugettext as _
 
-from tma_task.tasks import task_generate_users_from_csv
 from courseware.courses import get_course_by_id, get_courses
 
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from django.contrib.auth.tokens import default_token_generator
-from django.core.exceptions import ValidationError
-from django.core.urlresolvers import reverse
-from django.core.validators import validate_email
-from django.views.decorators.http import require_POST,require_GET,require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 
 from collections import OrderedDict, defaultdict
@@ -42,7 +31,6 @@ from openedx.core.djangoapps.course_groups.models import CohortMembership, Cours
 from openedx.core.djangoapps.course_groups.cohorts import get_cohort, is_course_cohorted
 
 from lms.djangoapps.grades.new.course_grade import CourseGradeFactory
-from opaque_keys.edx.locations import SlashSeparatedCourseKey
 from opaque_keys.edx.keys import CourseKey, UsageKey
 from opaque_keys import InvalidKeyError
 
@@ -55,7 +43,6 @@ from util.json_request import JsonResponse, expect_json
 from lms.djangoapps.grades.context import grading_context_for_course
 
 from tma_apps.tma_support_functions import is_course_opened, is_enrollment_opened
-from tma_task.api_helper import submit_task
 
 from microsite_configuration.models import Microsite
 from mail_sender import prepare_and_send
@@ -63,41 +50,12 @@ from mail_sender import prepare_and_send
 log = logging.getLogger(__name__)
 
 
-# def testMail(self):
-        # _microsite = configuration_helpers.get_value('domain_prefix')
-        # return JsonResponse(_microsite)
-        
+
 responseInDict = {}
-
-tree = lambda: defaultdict(tree)
-
 valueArr = []
 bigNar = []
-dictoBlee = tree()
 
 
-
-def tma_graded_scorable_blocks_to_header(course_key):
-	"""
-	Returns an OrderedDict that maps a scorable block's id to its
-	headers in the final report.
-	"""
-	scorable_blocks_map = OrderedDict()
-	grading_context = grading_context_for_course(course_key)
-	for assignment_type_name, subsection_infos in grading_context['all_graded_subsections_by_type'].iteritems():
-		for subsection_index, subsection_info in enumerate(subsection_infos, start=1):
-			for scorable_block in subsection_info['scored_descendants']:
-				header_name = (
-					u"{assignment_type} {subsection_index}: "
-					u"{subsection_name} - {scorable_block_name}"
-				).format(
-					scorable_block_name=scorable_block.display_name,
-					assignment_type=assignment_type_name,
-					subsection_index=subsection_index,
-					subsection_name=subsection_info['subsection_block'].display_name,
-				)
-				scorable_blocks_map[scorable_block.location] = header_name
-	return scorable_blocks_map
 
 
 def testMail(self):
@@ -153,7 +111,7 @@ def testMail(self):
             #Gather user information
             user= enrollment.user
             user_grade = CourseGradeFactory().create(user, course)
-            graded_scorable_blocks = tma_graded_scorable_blocks_to_header(course_key)
+            # graded_scorable_blocks = tma_graded_scorable_blocks_to_header(course_key)
 
             for section_grade in user_grade.grade_value['section_breakdown']:
                 grade_summary[section_grade['category']]=section_grade['percent']
@@ -265,6 +223,6 @@ def testMail(self):
             cut = len(course_enrollments)        
             bigNar.append(userDict) 
             res = bigNar[0 : cut] 
-	prepare_and_send(bigNar)        
+	prepare_and_send(res)        
 	return JsonResponse(res)
 			 

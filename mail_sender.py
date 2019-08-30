@@ -38,6 +38,9 @@ from email.mime.text import MIMEText
 from datetime import date
 from dateutil.parser import parse
 
+# Json check user limits for mailing
+from json_creator import json_record, json_check
+
 
 log = logging.getLogger(__name__)
 
@@ -45,26 +48,18 @@ user_dict_test = {'first_name': 'Agathe', 'relay': 1, 'mailInfo': [1, 2], 'userM
 
 org ="ATEE"
 
-def mail_sender(user_email,template):
-	with open('data.json', 'r+') as f:
-		data = json.load(f)
-		data['id'] = 134 # <--- add `id` value.
-		f.seek(0)        # <--- should reset file position to the beginning.
-		json.dump(data, f, indent=4)
-		f.truncate()     # remove remaining part
-
-
 
 
 @csrf_exempt
 def mail_sender(user_email,template):
 	toaddr = user_email
+	# log.warning("__________________________________get__READY_to_rumble____")
 	cc = ['daivis.hubbel@themoocagency.com']
 	html = template
 
 	part2 = MIMEText(html, 'html')
 	fromaddr = 'The MOOC Agency MOOC ATEE<no-reply@themoocagency.com>'
-	# toaddr = 'daivis.hubbel@themoocagency.com'
+	toaddr = 'daivis.hubbel@themoocagency.com'
 	# toaddr = str(email)
 			# toaddr = recipient
 	toaddrs = [toaddr] + cc
@@ -135,8 +130,15 @@ def prepare_list_for_mailing(list) :
 		userDict_to_mail["course_id"] = userDict["course_id"]
 			
 		try :
-			userDict_to_mail["relay"] = main(arrayUser) 	
-			# mail_sender_template(userDict_to_mail)	
+			userDict_to_mail["relay"] = main(arrayUser)
+			try : 
+				json_check(user_name)
+				if json_check(user_name) == False: 
+					mail_sender_template(userDict_to_mail)
+					json_record(user_name)
+			except :
+				json_record(user_name)
+				mail_sender_template(userDict_to_mail)
 
 		except:	
 			userDict_to_mail["relay"] = "no value"	
@@ -160,3 +162,4 @@ def define_name_of_work(nbr_works,relay) :
    
 def prepare_and_send(list) : 
 	prepare_list_for_mailing(list)
+
